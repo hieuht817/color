@@ -8,6 +8,7 @@ import (
 
 	"github.com/mattn/go-colorable"
 	"github.com/mattn/go-isatty"
+	"sync"
 )
 
 // NoColor defines if the output is colorized or not. It's dynamically set to
@@ -20,6 +21,7 @@ var NoColor = !isatty.IsTerminal(os.Stdout.Fd())
 type Color struct {
 	params  []Attribute
 	noColor *bool
+	sync.Mutex
 }
 
 // Attribute defines a single SGR Code
@@ -155,7 +157,9 @@ var Output = colorable.NewColorableStdout()
 // encountered. This is the standard fmt.Print() method wrapped with the given
 // color.
 func (c *Color) Print(a ...interface{}) (n int, err error) {
+	c.Lock()
 	c.Set()
+	defer c.Unlock()
 	defer c.unset()
 
 	return fmt.Fprint(Output, a...)
@@ -165,7 +169,9 @@ func (c *Color) Print(a ...interface{}) (n int, err error) {
 // It returns the number of bytes written and any write error encountered.
 // This is the standard fmt.Printf() method wrapped with the given color.
 func (c *Color) Printf(format string, a ...interface{}) (n int, err error) {
+	c.Lock()
 	c.Set()
+	defer c.Unlock()
 	defer c.unset()
 
 	return fmt.Fprintf(Output, format, a...)
@@ -177,7 +183,9 @@ func (c *Color) Printf(format string, a ...interface{}) (n int, err error) {
 // encountered. This is the standard fmt.Print() method wrapped with the given
 // color.
 func (c *Color) Println(a ...interface{}) (n int, err error) {
+	c.Lock()
 	c.Set()
+	defer c.Unlock()
 	defer c.unset()
 
 	return fmt.Fprintln(Output, a...)
